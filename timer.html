@@ -1,0 +1,151 @@
+<!DOCTYPE html><html>
+  <head>
+    <meta charset="utf-8">
+
+    <script>
+      var padZeros = true
+      var stopButtons = [4,5]
+      var startButtons = [9]
+      var resetButtons = [4,5,0]
+    </script>
+
+    <style>
+      body{
+        text-align: center;
+        font-family: "Return of Ganon";
+        font-size: 42px;
+        color: #ffffff;
+      }
+      .img{position:absolute;z-index:1;}
+
+        #container{
+            display:inline-block;
+            width:200px;
+            height:100px;
+            margin: 0 auto;
+            position:relative; }
+
+        #canvas{
+            position:relative;
+            z-index:20;
+        }
+
+    </style>
+  </head>
+
+  <body>
+    <div id="container">
+
+      <div id="timer">00:00:00</div>
+
+    </div>
+
+    <script>
+
+    //var timerVar = setInterval(countTimer, 1000);
+    var timerVar
+    var timerRunning = false
+    var totalSeconds = 0;
+    function countTimer() {
+       ++totalSeconds;
+       var hours = Math.floor(totalSeconds /3600);
+       var minutes = Math.floor((totalSeconds - hours*3600)/60);
+       var seconds = totalSeconds - (hours*3600 + minutes*60);
+
+       if (padZeros) {
+         if (hours.toString().length == 1) {
+             hours = "0" + hours;
+         }
+         if (minutes.toString().length == 1) {
+             minutes = "0" + minutes;
+         }
+         if (seconds.toString().length == 1) {
+             seconds = "0" + seconds;
+         }
+      }
+
+       document.getElementById("timer").innerHTML = hours + ":" + minutes + ":" + seconds;
+    }
+
+    var interval;
+
+    if (!('ongamepadconnected' in window)) {
+      // No gamepad events available, poll instead.
+      interval = setInterval(pollGamepads, 500);
+    }
+
+    function pollGamepads() {
+      var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+      for (var i = 0; i < gamepads.length; i++) {
+        var gp = gamepads[i];
+        if (gp) {
+          gameLoop();
+          clearInterval(interval);
+        }
+      }
+    }
+
+    function buttonPressed(b) {
+      if (typeof(b) == "object") {
+        return b.pressed;
+      }
+      return b == 1.0;
+    }
+
+    function gameLoop() {
+      var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+      if (!gamepads) {
+        return;
+      }
+
+      for (var pad = 0; pad < gamepads.length-1; pad++) {
+        var gp = gamepads[pad];
+        if (gp) {
+
+          var startTimer = true
+          for (var b = 0; b < startButtons.length; b++) {
+            if (!buttonPressed(gp.buttons[startButtons[b]])) {
+              startTimer = false
+            }
+          }
+          if (startTimer) {
+            console.log("Timer Started")
+            if (!timerRunning){timerVar = setInterval(countTimer, 1000)}
+            timerRunning = true
+          }
+
+          var stopTimer = true
+          for (var b = 0; b < stopButtons.length; b++) {
+            if (!buttonPressed(gp.buttons[stopButtons[b]])) {
+              stopTimer = false
+            }
+          }
+          if (stopTimer) {
+            console.log("Timer Stopped")
+            if (timerRunning){clearInterval(timerVar)}
+            timerRunning = false
+          }
+
+          var resetTimer = true
+          for (var b = 0; b < resetButtons.length; b++) {
+            if (!buttonPressed(gp.buttons[resetButtons[b]])) {
+              resetTimer = false
+            }
+          }
+          if (resetTimer) {
+            console.log("Timer Reset")
+            totalSeconds = 0
+            clearInterval(timerVar)
+            timerRunning = false
+          }
+
+        }
+
+      }
+
+      start = requestAnimationFrame(gameLoop);
+    }
+
+    </script>
+  </body>
+</html>
